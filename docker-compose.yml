@@ -1,0 +1,48 @@
+version: '3'
+
+networks:
+  mysql-phpmyadmin:
+volumes:
+    persistent:
+services:
+  web:
+    container_name: web_app
+    build:
+      dockerfile: ./apache-php/Dockerfile
+      context: .
+    volumes: 
+      - ./www:/var/www/html/
+    environment: 
+      - PROJECT_DIR=/var/www/html
+    ports: 
+      - 8001:80
+    depends_on: 
+      - mysql
+    networks:
+      - mysql-phpmyadmin
+  mysql:
+    image: mysql:8
+    restart: always
+    networks:
+      - mysql-phpmyadmin
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: test
+      MYSQL_ROOT_PASSWORD: test
+    volumes:
+      - ./dump:/docker-entrypoint-initdb.d
+      - persistent:/var/lib/mysql
+  phpmyadmin:
+    image: phpmyadmin
+    restart: always
+    networks:
+      - mysql-phpmyadmin
+    depends_on: 
+      - mysql
+    ports:
+        - 8000:80
+    environment:
+        - PMA_HOST=mysql
